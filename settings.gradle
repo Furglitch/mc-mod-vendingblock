@@ -9,7 +9,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'example_mod'
+rootProject.name = 'vendingblock'
 
 // 1.21.1 projects
 include 'v1211common'

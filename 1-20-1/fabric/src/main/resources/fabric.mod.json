@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "id": "example_mod",
+  "id": "vendingblock",
   "version": "${version}",
-  "name": "Example Mod",
+  "name": "Vending Block: Restocked",
   "description": "This is an example description!",
-  "authors": ["Me!"],
+  "authors": ["Furglitch"],
   "license": "Insert License Here",
   "entrypoints": {
     "main": [
-      "com.example.fabric.ExampleModFabric"
+      "com.furglitch.vendingblock.fabric.VendingBlockFabric"
     ]
   },
   "mixins": [
-    "example_mod.mixins.json"
+    "vendingblock.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.15.11",
