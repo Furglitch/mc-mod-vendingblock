@@ -1,0 +1,148 @@
+plugins {
+    id 'dev.architectury.loom' version '1.13-SNAPSHOT' apply false
+    id 'architectury-plugin' version '3.4-SNAPSHOT'
+    id 'com.gradleup.shadow' version '8.3.6' apply false
+    id "io.github.pacifistmc.forgix" version "1.3.4"
+}
+
+allprojects {
+    group = rootProject.maven_group
+    version = rootProject.mod_version
+}
+
+subprojects {
+    apply plugin: 'dev.architectury.loom'
+    apply plugin: 'architectury-plugin'
+    apply plugin: 'maven-publish'
+
+    // Determine version from project name  
+    def versionFolder = null
+    if (project.name.startsWith('v1211')) {
+        versionFolder = '1-21-1'
+        project.ext.minecraft_version = rootProject.mc_1_21_1_minecraft_version
+        project.ext.architectury_api_version = rootProject.mc_1_21_1_architectury_api_version
+        project.ext.fabric_loader_version = rootProject.mc_1_21_1_fabric_loader_version
+        project.ext.fabric_api_version = rootProject.mc_1_21_1_fabric_api_version
+        project.ext.neoforge_version = rootProject.mc_1_21_1_neoforge_version
+        project.ext.enabled_platforms = rootProject.mc_1_21_1_enabled_platforms
+    } else if (project.name.startsWith('v1201')) {
+        versionFolder = '1-20-1'
+        project.ext.minecraft_version = rootProject.mc_1_20_1_minecraft_version
+        project.ext.architectury_api_version = rootProject.mc_1_20_1_architectury_api_version
+        project.ext.fabric_loader_version = rootProject.mc_1_20_1_fabric_loader_version
+        project.ext.fabric_api_version = rootProject.mc_1_20_1_fabric_api_version
+        project.ext.forge_version = rootProject.mc_1_20_1_forge_version
+        project.ext.enabled_platforms = rootProject.mc_1_20_1_enabled_platforms
+    }
+
+    def displayNames = [
+        'v1211common'  : '1.21.1-common',
+        'v1211fabric'  : '1.21.1-fabric',
+        'v1211neoforge': '1.21.1-neoforge',
+        'v1201common'  : '1.20.1-common',
+        'v1201fabric'  : '1.20.1-fabric',
+        'v1201forge'   : '1.20.1-forge'
+    ]
+
+    base {
+        archivesName = "$rootProject.archives_name-${displayNames.getOrDefault(project.name, project.name)}"
+    }
+
+    repositories {
+        // Add repositories to retrieve artifacts from in here.
+        // You should only use this when depending on other mods because
+        // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+        // See https://docs.gradle.org/current/userguide/declaring_repositories.html
+        // for more information about repositories.
+    }
+
+    loom {
+        silentMojangMappingsLicense()
+    }
+
+    dependencies {
+        minecraft "net.minecraft:minecraft:${project.minecraft_version}"
+        mappings loom.officialMojangMappings()
+    }
+
+    def javaVersion = versionFolder == '1-20-1' ? JavaVersion.VERSION_17 : JavaVersion.VERSION_21
+    def javaRelease = versionFolder == '1-20-1' ? 17 : 21
+
+    java {
+        // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+        // if it is present.
+        // If you remove this line, sources will not be generated.
+        withSourcesJar()
+
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        it.options.release = javaRelease
+    }
+
+    // Configure Maven publishing.
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                artifactId = base.archivesName.get()
+                from components.java
+            }
+        }
+
+        // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+        repositories {
+            // Add repositories to publish to here.
+            // Notice: This block does NOT have the same function as the block in the top level.
+            // The repositories here will be used for publishing your artifact, not for
+            // retrieving dependencies.
+        }
+    }
+}
+
+forgix {
+    group = rootProject.maven_group
+    archiveClassifier = "1.21.1-merged"
+    archiveVersion = rootProject.mod_version
+    
+    merge("v1211fabric") {
+        inputJar = project(":v1211fabric").tasks.remapJar.archiveFile
+    }
+    merge("v1211neoforge") {
+        inputJar = project(":v1211neoforge").tasks.remapJar.archiveFile
+    }
+}
+
+tasks.named("mergeJars").configure {
+    inputs.files(project(":v1211fabric").tasks.remapJar.archiveFile)
+    inputs.files(project(":v1211neoforge").tasks.remapJar.archiveFile)
+}
+
+tasks.register("merge1201Jars", Zip) {
+    group = "build"
+    description = "Merges 1.20.1 fabric and forge jars"
+    dependsOn ":v1201fabric:remapJar", ":v1201forge:remapJar"
+
+    archiveBaseName = rootProject.archives_name
+    archiveVersion = rootProject.mod_version
+    archiveClassifier = "1.20.1-merged"
+    archiveExtension = "jar"
+    destinationDirectory = layout.buildDirectory.dir("merged")
+
+    from(zipTree(project(":v1201fabric").tasks.remapJar.archiveFile))
+    from(zipTree(project(":v1201forge").tasks.remapJar.archiveFile)) {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+}
+
+tasks.register("mergeAll") {
+    group = "build"
+    description = "Merges jars for all MC versions"
+    dependsOn "mergeJars", "merge1201Jars"
+}
+
+// Force sequential execution to avoid Architectury Transformer parallel path conflicts
+tasks.named("merge1201Jars").configure {
+    mustRunAfter "mergeJars"
+}

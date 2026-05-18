@@ -1,0 +1,598 @@
+name: Update Modloader Versions
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-modloader
+  cancel-in-progress: true
+
+jobs:
+
+  neoforge-1-21-1:
+    name: Update NeoForge 1.21.1
+    runs-on: ubuntu-latest
+    env:
+      maven_repo: "https://maven.neoforged.net/releases"
+      maven_path: "net/neoforged/neoforge"
+      prefix: "21.1."
+      prop_key: "mc_1_21_1_neoforge_version"
+      props_file: "gradle.properties"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Parse latest/current NeoForge version
+        id: parse
+        run: |
+          set -euo pipefail
+          tmp=/tmp/maven-metadata.xml
+          url="$maven_repo/$maven_path/maven-metadata.xml"
+          echo "Fetching $url"
+          curl -fsSL "$url" -o "$tmp"
+          versions=$(awk -F'[<>]' '/<version>/{print $3}' "$tmp" || true)
+          PREFIX_REGEX=$(printf '%s' "$prefix" | sed 's/\./\\./g')
+          latest=$(printf "%s\n" $versions | grep -E "^${PREFIX_REGEX}" | sort -V | tail -n1 || true)
+          current=$(grep "^${prop_key}" "$props_file" | sed 's/.*= *//' | tr -d '[:space:]')
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+      - name: Update gradle.properties
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          set -euo pipefail
+          latest="${{ steps.parse.outputs.latest }}"
+          echo "Updating $prop_key -> $latest"
+          sed -i "s|^${prop_key} = .*|${prop_key} = ${latest}|" "$props_file"
+          git add "$props_file"
+
+      - name: Create branch name
+        id: branch_name
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          sanitized_branch=$(printf '%s' "${{ github.ref_name }}" | sed 's/\./-/g')
+          branch="github-actions/${sanitized_branch}/update/neoforge-1.21.1"
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+
+      - name: Prepare git user
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Compose PR body
+        id: compose
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          set -euo pipefail
+          latest="${{ steps.parse.outputs.latest }}"
+          current="${{ steps.parse.outputs.current }}"
+          pr_file=/tmp/pr_body.txt
+
+          echo "Bumps \`mc_1_21_1_neoforge_version\` in gradle.properties from ${current} to ${latest}." > "$pr_file"
+          echo "" >> "$pr_file"
+
+          changelog_url="${{ env.maven_repo }}/${{ env.maven_path }}/${latest}/neoforge-${latest}-changelog.txt"
+          if curl -fsSL "$changelog_url" -o /tmp/changelog.txt; then
+            if [ -n "$current" ]; then
+              awk -v old="$current" 'BEGIN{pat="`"old"`"} $0 ~ pat {exit} {print}' /tmp/changelog.txt > /tmp/changelog_trimmed.txt || true
+              if [ ! -s /tmp/changelog_trimmed.txt ]; then
+                cp /tmp/changelog.txt /tmp/changelog_trimmed.txt || true
+              fi
+            else
+              cp /tmp/changelog.txt /tmp/changelog_trimmed.txt || true
+            fi
+
+            echo "<details>" >> "$pr_file"
+            echo "<summary>Release notes</summary>" >> "$pr_file"
+            echo "" >> "$pr_file"
+            perl -0777 -ne '
+              my $s = $_;
+              while ($s =~ /[-*]?\s*`([^`]+)`\s*(.*?)(?=\n\s*[-*]?\s*`|\z)/msg) {
+                my ($v, $body) = ($1, $2);
+                my @co;
+                while ($body =~ /Co-authored-by:[^\n<]*<([^>]+)>/g) {
+                  my $mail = $1;
+                  my $user;
+                  if ($mail =~ /\+([^@>]+)@/) { $user = $1; }
+                  else { ($user) = $mail =~ /([^@>]+)/; }
+                  push @co, $user if defined $user and $user ne "";
+                }
+                $body =~ s/\n\s*Co-authored-by:[^\n]*//g;
+                $body =~ s/`([^`]+)`/<code>$1<\/code>/g;
+                $body =~ s/\(#(\d+)\)/(<a href="https:\/\/github.com\/neoforged\/NeoForge\/pull\/$1">#$1<\/a>)/g;
+                $body =~ s/(?<=\s)#(\d+)/<a href="https:\/\/github.com\/neoforged\/NeoForge\/pull\/$1">#$1<\/a>/g;
+                $body =~ s/^\s+|\s+$//g;
+                print "<h2>$v<\/h2>\n";
+                print $body . "\n";
+                if (@co) {
+                  print "<h3>Co-Authors<\/h3>\n";
+                  foreach my $u (@co) {
+                    print "<a href=\"https://github.com/$u\"><code>\@$u<\/code><\/a>\n";
+                  }
+                }
+                print "\n";
+              }
+            ' /tmp/changelog_trimmed.txt >> "$pr_file" || true
+
+            echo "</details>" >> "$pr_file"
+          else
+            echo "Release notes not found at $changelog_url" >> "$pr_file"
+          fi
+
+          {
+            echo "body<<EOF"
+            cat "$pr_file"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.branch_name.outputs.branch }}
+          commit-message: "chore(deps): bump mc_1_21_1_neoforge_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          title: "chore(deps): bump mc_1_21_1_neoforge_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          body: ${{ steps.compose.outputs.body }}
+          delete-branch: false
+
+  forge-1-20-1:
+    name: Update Forge 1.20.1
+    runs-on: ubuntu-latest
+    env:
+      maven_repo: "https://maven.minecraftforge.net"
+      maven_path: "net/minecraftforge/forge"
+      mc_prefix: "1.20.1-"
+      prop_key: "mc_1_20_1_forge_version"
+      props_file: "gradle.properties"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Parse latest/current Forge version
+        id: parse
+        run: |
+          set -euo pipefail
+          tmp=/tmp/maven-metadata.xml
+          url="$maven_repo/$maven_path/maven-metadata.xml"
+          echo "Fetching $url"
+          curl -fsSL "$url" -o "$tmp"
+          versions=$(awk -F'[<>]' '/<version>/{print $3}' "$tmp" || true)
+          PREFIX_REGEX=$(printf '%s' "$mc_prefix" | sed 's/\./\\./g')
+          latest_raw=$(printf "%s\n" $versions | grep -E "^${PREFIX_REGEX}" | grep -v -E "\-(rc|beta|alpha)\." | sort -V | tail -n1 || true)
+          latest="${latest_raw#${mc_prefix}}"
+          current=$(grep "^${prop_key}" "$props_file" | sed 's/.*= *//' | tr -d '[:space:]')
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+      - name: Update gradle.properties
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          set -euo pipefail
+          latest="${{ steps.parse.outputs.latest }}"
+          echo "Updating $prop_key -> $latest"
+          sed -i "s|^${prop_key} = .*|${prop_key} = ${latest}|" "$props_file"
+          git add "$props_file"
+
+      - name: Create branch name
+        id: branch_name
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          sanitized_branch=$(printf '%s' "${{ github.ref_name }}" | sed 's/\./-/g')
+          branch="github-actions/${sanitized_branch}/update/forge-1.20.1"
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+
+      - name: Prepare git user
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Pull Request
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.branch_name.outputs.branch }}
+          commit-message: "chore(deps): bump mc_1_20_1_forge_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          title: "chore(deps): bump mc_1_20_1_forge_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          body: "Bumps `mc_1_20_1_forge_version` in gradle.properties from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}."
+          delete-branch: false
+
+  fabric-loader-1-21-1:
+    name: Update Fabric Loader 1.21.1
+    runs-on: ubuntu-latest
+    env:
+      maven_repo: "https://maven.fabricmc.net"
+      maven_path: "net/fabricmc/fabric-loader"
+      prop_key: "mc_1_21_1_fabric_loader_version"
+      props_file: "gradle.properties"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Parse latest/current Fabric Loader version
+        id: parse
+        run: |
+          set -euo pipefail
+          tmp=/tmp/maven-metadata.xml
+          url="$maven_repo/$maven_path/maven-metadata.xml"
+          echo "Fetching $url"
+          curl -fsSL "$url" -o "$tmp"
+          versions=$(awk -F'[<>]' '/<version>/{print $3}' "$tmp" || true)
+          # Stable releases only: x.y.z with no pre-release suffix
+          latest=$(printf "%s\n" $versions | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -n1 || true)
+          current=$(grep "^${prop_key}" "$props_file" | sed 's/.*= *//' | tr -d '[:space:]')
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+      - name: Update gradle.properties
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          set -euo pipefail
+          latest="${{ steps.parse.outputs.latest }}"
+          echo "Updating $prop_key -> $latest"
+          sed -i "s|^${prop_key} = .*|${prop_key} = ${latest}|" "$props_file"
+          git add "$props_file"
+
+      - name: Create branch name
+        id: branch_name
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          sanitized_branch=$(printf '%s' "${{ github.ref_name }}" | sed 's/\./-/g')
+          branch="github-actions/${sanitized_branch}/update/fabric-loader-1.21.1"
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+
+      - name: Prepare git user
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Pull Request
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.branch_name.outputs.branch }}
+          commit-message: "chore(deps): bump mc_1_21_1_fabric_loader_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          title: "chore(deps): bump mc_1_21_1_fabric_loader_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          body: "Bumps `mc_1_21_1_fabric_loader_version` in gradle.properties from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}."
+          delete-branch: false
+
+  fabric-loader-1-20-1:
+    name: Update Fabric Loader 1.20.1
+    runs-on: ubuntu-latest
+    env:
+      maven_repo: "https://maven.fabricmc.net"
+      maven_path: "net/fabricmc/fabric-loader"
+      prop_key: "mc_1_20_1_fabric_loader_version"
+      props_file: "gradle.properties"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Parse latest/current Fabric Loader version
+        id: parse
+        run: |
+          set -euo pipefail
+          tmp=/tmp/maven-metadata.xml
+          url="$maven_repo/$maven_path/maven-metadata.xml"
+          echo "Fetching $url"
+          curl -fsSL "$url" -o "$tmp"
+          versions=$(awk -F'[<>]' '/<version>/{print $3}' "$tmp" || true)
+          latest=$(printf "%s\n" $versions | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -n1 || true)
+          current=$(grep "^${prop_key}" "$props_file" | sed 's/.*= *//' | tr -d '[:space:]')
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+      - name: Update gradle.properties
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          set -euo pipefail
+          latest="${{ steps.parse.outputs.latest }}"
+          echo "Updating $prop_key -> $latest"
+          sed -i "s|^${prop_key} = .*|${prop_key} = ${latest}|" "$props_file"
+          git add "$props_file"
+
+      - name: Create branch name
+        id: branch_name
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          sanitized_branch=$(printf '%s' "${{ github.ref_name }}" | sed 's/\./-/g')
+          branch="github-actions/${sanitized_branch}/update/fabric-loader-1.20.1"
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+
+      - name: Prepare git user
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Pull Request
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.branch_name.outputs.branch }}
+          commit-message: "chore(deps): bump mc_1_20_1_fabric_loader_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          title: "chore(deps): bump mc_1_20_1_fabric_loader_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          body: "Bumps `mc_1_20_1_fabric_loader_version` in gradle.properties from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}."
+          delete-branch: false
+
+  fabric-api-1-21-1:
+    name: Update Fabric API 1.21.1
+    runs-on: ubuntu-latest
+    env:
+      maven_repo: "https://maven.fabricmc.net"
+      maven_path: "net/fabricmc/fabric-api/fabric-api"
+      mc_suffix: "+1.21.1"
+      prop_key: "mc_1_21_1_fabric_api_version"
+      props_file: "gradle.properties"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Parse latest/current Fabric API version
+        id: parse
+        run: |
+          set -euo pipefail
+          tmp=/tmp/maven-metadata.xml
+          url="$maven_repo/$maven_path/maven-metadata.xml"
+          echo "Fetching $url"
+          curl -fsSL "$url" -o "$tmp"
+          versions=$(awk -F'[<>]' '/<version>/{print $3}' "$tmp" || true)
+          latest=$(printf "%s\n" $versions | grep -F "$mc_suffix" | grep -v -E "-(beta|alpha|rc|SNAPSHOT)" | sort -V | tail -n1 || true)
+          current=$(grep "^${prop_key}" "$props_file" | sed 's/.*= *//' | tr -d '[:space:]')
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+      - name: Update gradle.properties
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          set -euo pipefail
+          latest="${{ steps.parse.outputs.latest }}"
+          echo "Updating $prop_key -> $latest"
+          sed -i "s|^${prop_key} = .*|${prop_key} = ${latest}|" "$props_file"
+          git add "$props_file"
+
+      - name: Create branch name
+        id: branch_name
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          sanitized_branch=$(printf '%s' "${{ github.ref_name }}" | sed 's/\./-/g')
+          branch="github-actions/${sanitized_branch}/update/fabric-api-1.21.1"
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+
+      - name: Prepare git user
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Pull Request
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.branch_name.outputs.branch }}
+          commit-message: "chore(deps): bump mc_1_21_1_fabric_api_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          title: "chore(deps): bump mc_1_21_1_fabric_api_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          body: "Bumps `mc_1_21_1_fabric_api_version` in gradle.properties from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}."
+          delete-branch: false
+
+  fabric-api-1-20-1:
+    name: Update Fabric API 1.20.1
+    runs-on: ubuntu-latest
+    env:
+      maven_repo: "https://maven.fabricmc.net"
+      maven_path: "net/fabricmc/fabric-api/fabric-api"
+      mc_suffix: "+1.20.1"
+      prop_key: "mc_1_20_1_fabric_api_version"
+      props_file: "gradle.properties"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Parse latest/current Fabric API version
+        id: parse
+        run: |
+          set -euo pipefail
+          tmp=/tmp/maven-metadata.xml
+          url="$maven_repo/$maven_path/maven-metadata.xml"
+          echo "Fetching $url"
+          curl -fsSL "$url" -o "$tmp"
+          versions=$(awk -F'[<>]' '/<version>/{print $3}' "$tmp" || true)
+          latest=$(printf "%s\n" $versions | grep -F "$mc_suffix" | grep -v -E "-(beta|alpha|rc|SNAPSHOT)" | sort -V | tail -n1 || true)
+          current=$(grep "^${prop_key}" "$props_file" | sed 's/.*= *//' | tr -d '[:space:]')
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+      - name: Update gradle.properties
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          set -euo pipefail
+          latest="${{ steps.parse.outputs.latest }}"
+          echo "Updating $prop_key -> $latest"
+          sed -i "s|^${prop_key} = .*|${prop_key} = ${latest}|" "$props_file"
+          git add "$props_file"
+
+      - name: Create branch name
+        id: branch_name
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          sanitized_branch=$(printf '%s' "${{ github.ref_name }}" | sed 's/\./-/g')
+          branch="github-actions/${sanitized_branch}/update/fabric-api-1.20.1"
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+
+      - name: Prepare git user
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Pull Request
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.branch_name.outputs.branch }}
+          commit-message: "chore(deps): bump mc_1_20_1_fabric_api_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          title: "chore(deps): bump mc_1_20_1_fabric_api_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          body: "Bumps `mc_1_20_1_fabric_api_version` in gradle.properties from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}."
+          delete-branch: false
+
+  architectury-1-21-1:
+    name: Update Architectury API 1.21.1
+    runs-on: ubuntu-latest
+    env:
+      maven_repo: "https://maven.architectury.dev"
+      maven_path: "dev/architectury/architectury-fabric"
+      version_prefix: "13."
+      prop_key: "mc_1_21_1_architectury_api_version"
+      props_file: "gradle.properties"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Parse latest/current Architectury API version
+        id: parse
+        run: |
+          set -euo pipefail
+          tmp=/tmp/maven-metadata.xml
+          url="$maven_repo/$maven_path/maven-metadata.xml"
+          echo "Fetching $url"
+          curl -fsSL "$url" -o "$tmp"
+          versions=$(awk -F'[<>]' '/<version>/{print $3}' "$tmp" || true)
+          PREFIX_REGEX=$(printf '%s' "$version_prefix" | sed 's/\./\\./g')
+          latest=$(printf "%s\n" $versions | grep -E "^${PREFIX_REGEX}" | grep -v -E "-(beta|alpha|rc|SNAPSHOT)" | sort -V | tail -n1 || true)
+          current=$(grep "^${prop_key}" "$props_file" | sed 's/.*= *//' | tr -d '[:space:]')
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+      - name: Update gradle.properties
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          set -euo pipefail
+          latest="${{ steps.parse.outputs.latest }}"
+          echo "Updating $prop_key -> $latest"
+          sed -i "s|^${prop_key} = .*|${prop_key} = ${latest}|" "$props_file"
+          git add "$props_file"
+
+      - name: Create branch name
+        id: branch_name
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          sanitized_branch=$(printf '%s' "${{ github.ref_name }}" | sed 's/\./-/g')
+          branch="github-actions/${sanitized_branch}/update/architectury-1.21.1"
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+
+      - name: Prepare git user
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Pull Request
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.branch_name.outputs.branch }}
+          commit-message: "chore(deps): bump mc_1_21_1_architectury_api_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          title: "chore(deps): bump mc_1_21_1_architectury_api_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          body: "Bumps `mc_1_21_1_architectury_api_version` in gradle.properties from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}."
+          delete-branch: false
+
+  architectury-1-20-1:
+    name: Update Architectury API 1.20.1
+    runs-on: ubuntu-latest
+    env:
+      maven_repo: "https://maven.architectury.dev"
+      maven_path: "dev/architectury/architectury-fabric"
+      version_prefix: "9."
+      prop_key: "mc_1_20_1_architectury_api_version"
+      props_file: "gradle.properties"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Parse latest/current Architectury API version
+        id: parse
+        run: |
+          set -euo pipefail
+          tmp=/tmp/maven-metadata.xml
+          url="$maven_repo/$maven_path/maven-metadata.xml"
+          echo "Fetching $url"
+          curl -fsSL "$url" -o "$tmp"
+          versions=$(awk -F'[<>]' '/<version>/{print $3}' "$tmp" || true)
+          PREFIX_REGEX=$(printf '%s' "$version_prefix" | sed 's/\./\\./g')
+          latest=$(printf "%s\n" $versions | grep -E "^${PREFIX_REGEX}" | grep -v -E "-(beta|alpha|rc|SNAPSHOT)" | sort -V | tail -n1 || true)
+          current=$(grep "^${prop_key}" "$props_file" | sed 's/.*= *//' | tr -d '[:space:]')
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+      - name: Update gradle.properties
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          set -euo pipefail
+          latest="${{ steps.parse.outputs.latest }}"
+          echo "Updating $prop_key -> $latest"
+          sed -i "s|^${prop_key} = .*|${prop_key} = ${latest}|" "$props_file"
+          git add "$props_file"
+
+      - name: Create branch name
+        id: branch_name
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          sanitized_branch=$(printf '%s' "${{ github.ref_name }}" | sed 's/\./-/g')
+          branch="github-actions/${sanitized_branch}/update/architectury-1.20.1"
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+
+      - name: Prepare git user
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Pull Request
+        if: ${{ steps.parse.outputs.latest != '' && steps.parse.outputs.latest != steps.parse.outputs.current }}
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.branch_name.outputs.branch }}
+          commit-message: "chore(deps): bump mc_1_20_1_architectury_api_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          title: "chore(deps): bump mc_1_20_1_architectury_api_version from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}"
+          body: "Bumps `mc_1_20_1_architectury_api_version` in gradle.properties from ${{ steps.parse.outputs.current }} to ${{ steps.parse.outputs.latest }}."
+          delete-branch: false

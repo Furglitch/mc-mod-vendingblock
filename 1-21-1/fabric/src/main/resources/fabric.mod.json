@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "example_mod",
+  "version": "${version}",
+  "name": "Example Mod",
+  "description": "This is an example description!",
+  "authors": ["Me!"],
+  "license": "Insert License Here",
+  "entrypoints": {
+    "main": [
+      "com.example.fabric.ExampleModFabric"
+    ]
+  },
+  "mixins": [
+    "example_mod.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.2",
+    "fabric": "*",
+    "minecraft": "~1.21.1",
+    "architectury": ">=13.0.8"
+  }
+}
