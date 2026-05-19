@@ -31,20 +31,20 @@ subprojects {
     def versionFolder = null
     if (project.name.startsWith('v1211')) {
         versionFolder = '1-21-1'
-        project.ext.minecraft_version = rootProject.mc_1_21_1_minecraft_version
-        project.ext.architectury_api_version = rootProject.mc_1_21_1_architectury_api_version
-        project.ext.fabric_loader_version = rootProject.mc_1_21_1_fabric_loader_version
-        project.ext.fabric_api_version = rootProject.mc_1_21_1_fabric_api_version
-        project.ext.neoforge_version = rootProject.mc_1_21_1_neoforge_version
-        project.ext.enabled_platforms = rootProject.mc_1_21_1_enabled_platforms
+        project.ext.minecraft_version = rootProject.mc1211_minecraft_version
+        project.ext.architectury_version = rootProject.mc1211_architectury_version
+        project.ext.fabric_loader_version = rootProject.mc1211_fabric_loader_version
+        project.ext.fabric_api_version = rootProject.mc1211_fabric_api_version
+        project.ext.neoforge_version = rootProject.mc1211_neoforge_version
+        project.ext.enabled_platforms = rootProject.mc1211_enabled_platforms
     } else if (project.name.startsWith('v1201')) {
         versionFolder = '1-20-1'
-        project.ext.minecraft_version = rootProject.mc_1_20_1_minecraft_version
-        project.ext.architectury_api_version = rootProject.mc_1_20_1_architectury_api_version
-        project.ext.fabric_loader_version = rootProject.mc_1_20_1_fabric_loader_version
-        project.ext.fabric_api_version = rootProject.mc_1_20_1_fabric_api_version
-        project.ext.forge_version = rootProject.mc_1_20_1_forge_version
-        project.ext.enabled_platforms = rootProject.mc_1_20_1_enabled_platforms
+        project.ext.minecraft_version = rootProject.mc1201_minecraft_version
+        project.ext.architectury_version = rootProject.mc1201_architectury_version
+        project.ext.fabric_loader_version = rootProject.mc1201_fabric_loader_version
+        project.ext.fabric_api_version = rootProject.mc1201_fabric_api_version
+        project.ext.forge_version = rootProject.mc1201_forge_version
+        project.ext.enabled_platforms = rootProject.mc1201_enabled_platforms
     }
 
     def displayNames = [
@@ -118,8 +118,8 @@ project(":v1201fabric") {
     }
 
     dependencies {
-        modRuntimeOnly ("curse.maven:menulogue-${rootProject.mc_mod_menulogue_mod_id}:${rootProject.mc_1_21_1_mod_fabric_menulogue_file_id}")
-        modRuntimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_fabric_mod_id}:${rootProject.mc_1_21_1_mod_fabric_catalogue_file_id}")
+        modRuntimeOnly ("curse.maven:menulogue-${rootProject.mc_mod_menulogue_mod_id}:${rootProject.mc1201_mod_fabric_menulogue_file_id}")
+        modRuntimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_fabric_mod_id}:${rootProject.mc1201_mod_fabric_catalogue_file_id}")
     }
 }
 
@@ -128,7 +128,7 @@ project(":v1201forge") {
     }
 
     dependencies {
-        // runtimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_mod_id}:${rootProject.mc_1_21_1_mod_forge_menulogue_file_id}") // Crashes
+        // runtimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_mod_id}:${rootProject.mc1201_mod_forge_menulogue_file_id}") // Crashes
     }
 }
 
@@ -137,8 +137,8 @@ project(":v1211fabric") {
     }
 
     dependencies {
-        modRuntimeOnly ("curse.maven:menulogue-${rootProject.mc_mod_menulogue_mod_id}:${rootProject.mc_1_21_1_mod_fabric_menulogue_file_id}")
-        modRuntimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_fabric_mod_id}:${rootProject.mc_1_21_1_mod_fabric_catalogue_file_id}")
+        modRuntimeOnly ("curse.maven:menulogue-${rootProject.mc_mod_menulogue_mod_id}:${rootProject.mc1211_mod_fabric_menulogue_file_id}")
+        modRuntimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_mod_id}:${rootProject.mc1211_mod_fabric_catalogue_file_id}")
     }
 }
 
@@ -147,7 +147,7 @@ project(":v1211neoforge") {
     }
 
     dependencies {
-        runtimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_mod_id}:${rootProject.mc_1_21_1_mod_neoforge_menulogue_file_id}")
+        runtimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_mod_id}:${rootProject.mc1211_mod_neoforge_menulogue_file_id}")
     }
 }
 
