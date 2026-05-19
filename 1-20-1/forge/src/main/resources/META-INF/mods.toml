@@ -1,7 +1,7 @@
 modLoader = "javafml"
 loaderVersion = "[47,)"
 #issueTrackerURL = ""
-license = "Insert License Here"
+license = "GNU General Public License v3.0"
 
 [[mods]]
 modId = "vendingblock"
@@ -9,9 +9,9 @@ version = "${version}"
 displayName = "Vending Block: Restocked"
 authors = "Furglitch"
 description = '''
-This is an example description! Tell everyone what your mod is about!
+A revival of the classic Vending Block mod!
 '''
-#logoFile = ""
+logoFile = "pack.png"
 
 [[dependencies.vendingblock]]
 modId = "forge"

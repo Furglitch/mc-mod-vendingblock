@@ -3,9 +3,12 @@
   "id": "vendingblock",
   "version": "${version}",
   "name": "Vending Block: Restocked",
-  "description": "This is an example description!",
-  "authors": ["Furglitch"],
-  "license": "Insert License Here",
+  "description": "A revival of the classic Vending Block mod!",
+  "authors": [
+    "Furglitch"
+  ],
+  "license": "GNU General Public License v3.0",
+  "icon": "pack.png",
   "entrypoints": {
     "main": [
       "com.furglitch.vendingblock.fabric.VendingBlockFabric"

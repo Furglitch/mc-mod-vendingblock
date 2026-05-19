@@ -8,6 +8,18 @@ plugins {
 allprojects {
     group = rootProject.maven_group
     version = rootProject.mod_version
+
+    repositories {
+        maven {
+            name = "Modrinth"
+            url = "https://api.modrinth.com/maven"
+        }
+
+        maven {
+            name = "CurseForge"
+            url = "https://cursemaven.com/"
+        }
+    }
 }
 
 subprojects {
@@ -15,7 +27,7 @@ subprojects {
     apply plugin: 'architectury-plugin'
     apply plugin: 'maven-publish'
 
-    // Determine version from project name  
+    // Determine version from project name
     def versionFolder = null
     if (project.name.startsWith('v1211')) {
         versionFolder = '1-21-1'
@@ -101,11 +113,49 @@ subprojects {
     }
 }
 
+project(":v1201fabric") {
+    repositories {
+    }
+
+    dependencies {
+        modRuntimeOnly ("curse.maven:menulogue-${rootProject.mc_mod_menulogue_mod_id}:${rootProject.mc_1_21_1_mod_fabric_menulogue_file_id}")
+        modRuntimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_fabric_mod_id}:${rootProject.mc_1_21_1_mod_fabric_catalogue_file_id}")
+    }
+}
+
+project(":v1201forge") {
+    repositories {
+    }
+
+    dependencies {
+        // runtimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_mod_id}:${rootProject.mc_1_21_1_mod_forge_menulogue_file_id}") // Crashes
+    }
+}
+
+project(":v1211fabric") {
+    repositories {
+    }
+
+    dependencies {
+        modRuntimeOnly ("curse.maven:menulogue-${rootProject.mc_mod_menulogue_mod_id}:${rootProject.mc_1_21_1_mod_fabric_menulogue_file_id}")
+        modRuntimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_fabric_mod_id}:${rootProject.mc_1_21_1_mod_fabric_catalogue_file_id}")
+    }
+}
+
+project(":v1211neoforge") {
+    repositories {
+    }
+
+    dependencies {
+        runtimeOnly ("curse.maven:catalogue-${rootProject.mc_mod_catalogue_mod_id}:${rootProject.mc_1_21_1_mod_neoforge_menulogue_file_id}")
+    }
+}
+
 forgix {
     group = rootProject.maven_group
     archiveClassifier = "1.21.1-merged"
     archiveVersion = rootProject.mod_version
-    
+
     merge("v1211fabric") {
         inputJar = project(":v1211fabric").tasks.remapJar.archiveFile
     }
