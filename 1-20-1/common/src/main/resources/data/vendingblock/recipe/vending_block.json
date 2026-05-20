@@ -4,7 +4,7 @@
   "pattern": [
     "GGG",
     "GEG",
-    "MRM"
+    "WWW"
   ],
   "key": {
     "G": {
@@ -13,10 +13,7 @@
     "E": {
       "item": "minecraft:emerald"
     },
-    "R": {
-      "item": "minecraft:redstone"
-    },
-    "M": {
+    "W": {
       "tag": "planks"
     }
   },

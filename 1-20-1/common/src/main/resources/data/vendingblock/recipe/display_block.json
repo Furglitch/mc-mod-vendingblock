@@ -4,16 +4,13 @@
   "pattern": [
     "GGG",
     "G G",
-    "MRM"
+    "WWW"
   ],
   "key": {
     "G": {
       "tag": "c:glass_panes"
     },
-    "R": {
-      "item": "minecraft:redstone"
-    },
-    "M": {
+    "W": {
       "tag": "planks"
     }
   },

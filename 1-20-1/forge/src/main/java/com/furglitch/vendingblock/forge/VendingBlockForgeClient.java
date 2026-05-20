@@ -1,8 +1,13 @@
 package com.furglitch.vendingblock.forge;
 
 import com.furglitch.vendingblock.config.ConfigScreen;
+import com.furglitch.vendingblock.registry.BlockRegistry;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 public class VendingBlockForgeClient {
     public static void init() {
@@ -10,5 +15,13 @@ public class VendingBlockForgeClient {
             ConfigScreenHandler.ConfigScreenFactory.class,
             () -> new ConfigScreenHandler.ConfigScreenFactory((mc, screen) -> ConfigScreen.create(screen))
         );
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(VendingBlockForgeClient::onClientSetup);
+    }
+
+    private static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            ItemBlockRenderTypes.setRenderLayer(BlockRegistry.VENDING_BLOCK.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(BlockRegistry.DISPLAY_BLOCK.get(), RenderType.cutout());
+        });
     }
 }

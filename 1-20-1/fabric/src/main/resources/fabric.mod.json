@@ -13,6 +13,9 @@
     "main": [
       "com.furglitch.vendingblock.fabric.VendingBlockFabric"
     ],
+    "client": [
+      "com.furglitch.vendingblock.fabric.VendingBlockFabricClient"
+    ],
     "modmenu": [
       "com.furglitch.vendingblock.fabric.integration.ModMenu"
     ]
