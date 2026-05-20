@@ -33,3 +33,10 @@ mandatory = true
 versionRange = "[9.2.14,)"
 ordering = "AFTER"
 side = "BOTH"
+
+[[dependencies.vendingblock]]
+modId = "cloth_config"
+mandatory = true
+versionRange = "[11.0.0,)"
+ordering = "AFTER"
+side = "BOTH"

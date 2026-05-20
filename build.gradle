@@ -40,6 +40,8 @@ subprojects {
         project.ext.fabric_api_version = rootProject.mc1211_fabric_api_version
         project.ext.neoforge_version = rootProject.mc1211_neoforge_version
         project.ext.enabled_platforms = rootProject.mc1211_enabled_platforms
+        project.ext.clothconfig_version = rootProject.mc1211_mod_clothconfig_version
+        project.ext.modmenu_version = rootProject.mc1211_mod_modmenu_version
     } else if (project.name.startsWith('v1201')) {
         versionFolder = '1-20-1'
         project.ext.minecraft_version = rootProject.mc1201_minecraft_version
@@ -48,6 +50,8 @@ subprojects {
         project.ext.fabric_api_version = rootProject.mc1201_fabric_api_version
         project.ext.forge_version = rootProject.mc1201_forge_version
         project.ext.enabled_platforms = rootProject.mc1201_enabled_platforms
+        project.ext.clothconfig_version = rootProject.mc1201_mod_clothconfig_version
+        project.ext.modmenu_version = rootProject.mc1201_mod_modmenu_version
     }
 
     def displayNames = [

@@ -10,4 +10,9 @@ dependencies {
 
     // Architectury API. This is optional, and you can comment it out if you don't need it.
     modImplementation "dev.architectury:architectury:$project.architectury_version"
+
+    // Cloth Config API (compiled against the Fabric variant; platform implementations are provided per-platform).
+    modImplementation("me.shedaniel.cloth:cloth-config-fabric:${project.clothconfig_version}") {
+        exclude(group: "net.fabricmc.fabric-api")
+    }
 }
