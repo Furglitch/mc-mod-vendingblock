@@ -20,9 +20,9 @@ public final class VendingBlock {
     public static void init() {
         AutoConfig.register(ConfigClient.class, GsonConfigSerializer::new);
         AutoConfig.register(ConfigServer.class, GsonConfigSerializer::new);
+        TabRegistry.init();
         BlockRegistry.init();
         ItemRegistry.init();
-        TabRegistry.init();
     }
 
     public static ConfigClient getConfig() {
