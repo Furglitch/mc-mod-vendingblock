@@ -18,13 +18,13 @@ public class TabRegistry {
     public static RegistrySupplier<CreativeModeTab> VENDOR_TAB;
 
     public static void init() {
-        // VENDOR_TAB = TABS.register("vendor_tab",
-        //     () -> CreativeTabRegistry.create(Component.translatable("creative.vendingblock.tab"),
-        //         () -> new ItemStack(ItemRegistry.EXAMPLE_BLOCK_ITEM.get())
-        //     )
-        // );
+        VENDOR_TAB = TABS.register("vendor_tab",
+            () -> CreativeTabRegistry.create(Component.translatable("creative.vendingblock.tab"),
+                () -> new ItemStack(ItemRegistry.VENDING_BLOCK)
+            )
+        );
+
+        TABS.register();
     }
-
-
 
 }

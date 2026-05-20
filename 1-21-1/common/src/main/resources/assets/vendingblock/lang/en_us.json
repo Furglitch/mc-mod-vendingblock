@@ -1,5 +1,7 @@
 {
   "creative.vendingblock.tab": "Vending Block: Restocked",
+  "block.vendingblock.vending_block": "Vending Block",
+  "block.vendingblock.display_block": "Display Block",
   "text.autoconfig.vendingblock.title": "Vending Block: Restocked Configuration",
   "text.autoconfig.vendingblock.option.animation.@PrefixText": "Animations",
   "text.autoconfig.vendingblock.option.animation.itemMode": "Item Animation Mode",

@@ -5,6 +5,7 @@ import com.furglitch.vendingblock.config.ConfigServer;
 import com.furglitch.vendingblock.registry.BlockEntityRegistry;
 import com.furglitch.vendingblock.registry.BlockRegistry;
 import com.furglitch.vendingblock.registry.ItemRegistry;
+import com.furglitch.vendingblock.registry.TabRegistry;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
@@ -19,6 +20,7 @@ public final class VendingBlock {
         ItemRegistry.init();
         BlockRegistry.init();
         BlockEntityRegistry.init();
+        TabRegistry.init();
     }
 
     public static ConfigClient getConfig() {

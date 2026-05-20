@@ -16,17 +16,17 @@ public class ItemRegistry {
     private static final DeferredRegister<Item> ITEMS =
         DeferredRegister.create(VendingBlock.MOD_ID, Registries.ITEM);
 
-    // private static RegistrySupplier<Item> EXAMPLE_ITEM;
-    // private static RegistrySupplier<Item> EXAMPLE_BLOCK_ITEM;
+    static RegistrySupplier<Item> VENDING_BLOCK;
+    static RegistrySupplier<Item> DISPLAY_BLOCK;
 
     public static void init() {
-        // EXAMPLE_ITEM = registerItem("example_item", () -> new Item(baseProperties("example_item")
-        //     .arch$tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
-        // ));
+        VENDING_BLOCK = registerItem("vending_block", () -> new BlockItem(BlockRegistry.VENDING_BLOCK.get(), baseProperties("vending_block")
+            .arch$tab(TabRegistry.VENDOR_TAB)
+        ));
 
-        // EXAMPLE_BLOCK_ITEM = registerItem("example_block", () -> new BlockItem(BlockRegistry.EXAMPLE_BLOCK.get(), baseProperties("example_block")
-        //     .arch$tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
-        // ));
+        DISPLAY_BLOCK = registerItem("display_block", () -> new BlockItem(BlockRegistry.DISPLAY_BLOCK.get(), baseProperties("display_block")
+            .arch$tab(TabRegistry.VENDOR_TAB)
+        ));
 
         ITEMS.register();
     }
