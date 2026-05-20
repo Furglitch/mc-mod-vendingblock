@@ -15,7 +15,8 @@ public class BlockEntityRegistry {
     private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
         DeferredRegister.create(VendingBlock.MOD_ID, Registries.BLOCK_ENTITY_TYPE);
 
-    // public static RegistrySupplier<BlockEntityType<?>> EXAMPLE_BLOCK_ENTITY;
+    public static RegistrySupplier<BlockEntityType<?>> VENDOR_BE;
+    public static RegistrySupplier<BlockEntityType<?>> DISPLAY_BE;
 
     public static void init() {
 

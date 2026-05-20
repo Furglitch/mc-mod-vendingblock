@@ -1,25 +1,27 @@
 package com.furglitch.vendingblock;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.furglitch.vendingblock.config.ConfigClient;
 import com.furglitch.vendingblock.config.ConfigServer;
-import com.furglitch.vendingblock.registry.BlockEntityRegistry;
 import com.furglitch.vendingblock.registry.BlockRegistry;
 import com.furglitch.vendingblock.registry.ItemRegistry;
 import com.furglitch.vendingblock.registry.TabRegistry;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
-import net.minecraft.world.level.block.entity.BlockEntity;
 
 public final class VendingBlock {
     public static final String MOD_ID = "vendingblock";
 
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
     public static void init() {
         AutoConfig.register(ConfigClient.class, GsonConfigSerializer::new);
         AutoConfig.register(ConfigServer.class, GsonConfigSerializer::new);
-        ItemRegistry.init();
         BlockRegistry.init();
-        BlockEntityRegistry.init();
+        ItemRegistry.init();
         TabRegistry.init();
     }
 

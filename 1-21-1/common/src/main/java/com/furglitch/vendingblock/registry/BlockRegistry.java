@@ -3,6 +3,8 @@ package com.furglitch.vendingblock.registry;
 import java.util.function.Supplier;
 
 import com.furglitch.vendingblock.VendingBlock;
+import com.furglitch.vendingblock.block.DisplayBlock;
+import com.furglitch.vendingblock.block.VendorBlock;
 
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -20,12 +22,12 @@ public class BlockRegistry {
     public static RegistrySupplier<Block> VENDING_BLOCK, DISPLAY_BLOCK;
 
     public static void init(){
-        VENDING_BLOCK = registerBlock("vending_block", () -> new Block(baseProperties("vending_block")
+        VENDING_BLOCK = registerBlock("vending_block", () -> new VendorBlock(baseProperties("vending_block")
             .strength(1.0f)
             .sound(SoundType.METAL)
             .noOcclusion()
         ));
-        DISPLAY_BLOCK = registerBlock("display_block", () -> new Block(baseProperties("display_block")
+        DISPLAY_BLOCK = registerBlock("display_block", () -> new DisplayBlock(baseProperties("display_block")
             .strength(1.0f)
             .sound(SoundType.METAL)
             .noOcclusion()

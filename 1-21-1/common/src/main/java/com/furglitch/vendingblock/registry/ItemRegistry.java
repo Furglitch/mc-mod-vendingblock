@@ -7,7 +7,6 @@ import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.BlockItem;
 
@@ -16,8 +15,8 @@ public class ItemRegistry {
     private static final DeferredRegister<Item> ITEMS =
         DeferredRegister.create(VendingBlock.MOD_ID, Registries.ITEM);
 
-    static RegistrySupplier<Item> VENDING_BLOCK;
-    static RegistrySupplier<Item> DISPLAY_BLOCK;
+    public static RegistrySupplier<Item> VENDING_BLOCK;
+    public static RegistrySupplier<Item> DISPLAY_BLOCK;
 
     public static void init() {
         VENDING_BLOCK = registerItem("vending_block", () -> new BlockItem(BlockRegistry.VENDING_BLOCK.get(), baseProperties("vending_block")
