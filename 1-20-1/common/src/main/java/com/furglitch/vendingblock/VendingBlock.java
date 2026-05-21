@@ -7,6 +7,7 @@ import com.furglitch.vendingblock.config.ConfigClient;
 import com.furglitch.vendingblock.config.ConfigServer;
 import com.furglitch.vendingblock.registry.BlockRegistry;
 import com.furglitch.vendingblock.registry.ItemRegistry;
+import com.furglitch.vendingblock.registry.MenuRegistry;
 import com.furglitch.vendingblock.registry.TabRegistry;
 
 import me.shedaniel.autoconfig.AutoConfig;
@@ -23,6 +24,7 @@ public final class VendingBlock {
         TabRegistry.init();
         BlockRegistry.init();
         ItemRegistry.init();
+        MenuRegistry.init();
     }
 
     public static ConfigClient getConfig() {
