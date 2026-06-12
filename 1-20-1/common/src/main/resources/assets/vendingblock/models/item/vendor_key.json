@@ -1,9 +1,45 @@
 {
+  "format_version": "1.21.11",
+  "credit": "Made with Blockbench",
   "parent": "minecraft:item/generated",
   "textures": {
     "layer0": "vendingblock:item/vendor_key"
   },
   "display": {
+    "thirdperson_righthand": {
+      "rotation": [
+        -180,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        1.75,
+        0
+      ],
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        -180,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        1.75,
+        0
+      ],
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ]
+    },
     "firstperson_righthand": {
       "rotation": [
         128,
@@ -12,13 +48,13 @@
       ],
       "translation": [
         0,
-        1,
+        1.75,
         0
       ],
       "scale": [
-        0.4,
-        0.4,
-        0.4
+        0.25,
+        0.25,
+        0.25
       ]
     },
     "firstperson_lefthand": {
@@ -29,47 +65,58 @@
       ],
       "translation": [
         0,
-        1,
+        1.75,
         0
       ],
       "scale": [
-        0.4,
-        0.4,
-        0.4
+        0.25,
+        0.25,
+        0.25
       ]
     },
-    "thirdperson_righthand": {
-      "rotation": [
-        180,
-        0,
-        0
-      ],
+    "ground": {
       "translation": [
         0,
-        1,
+        1.5,
         0
       ],
       "scale": [
-        0.4,
-        0.4,
-        0.4
+        0.5,
+        0.5,
+        0.5
       ]
     },
-    "thirdperson_lefthand": {
+    "gui": {
       "rotation": [
-        180,
-        0,
-        0
-      ],
+        -15,
+        15,
+        15
+      ]
+    },
+    "head": {
       "translation": [
         0,
-        1,
-        0
+        -10.75,
+        -3.75
       ],
       "scale": [
-        0.4,
-        0.4,
-        0.4
+        0.2,
+        0.2,
+        0.2
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    },
+    "on_shelf": {
+      "translation": [
+        0,
+        0,
+        -3.5
       ]
     }
   }
