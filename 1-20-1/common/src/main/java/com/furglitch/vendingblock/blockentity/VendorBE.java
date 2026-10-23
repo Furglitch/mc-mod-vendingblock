@@ -7,6 +7,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Inventory;
@@ -52,7 +55,11 @@ public class VendorBE extends BaseContainerBlockEntity {
 
     @Override
     public ItemStack removeItem(int slot, int count) {
-        return ContainerHelper.removeItem(items, slot, count);
+        ItemStack result = ContainerHelper.removeItem(items, slot, count);
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+        }
+        return result;
     }
 
     @Override
@@ -66,6 +73,9 @@ public class VendorBE extends BaseContainerBlockEntity {
         if (stack.getCount() > getMaxStackSize()) {
             stack.setCount(getMaxStackSize());
         }
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+        }
     }
 
     @Override
@@ -76,6 +86,9 @@ public class VendorBE extends BaseContainerBlockEntity {
     @Override
     public void clearContent() {
         items.clear();
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+        }
     }
 
     @Override
@@ -94,6 +107,16 @@ public class VendorBE extends BaseContainerBlockEntity {
         super.load(tag);
         items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, items);
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return saveWithoutMetadata();
     }
 
     public static class Ticker<T extends VendorBE> implements BlockEntityTicker<T> {

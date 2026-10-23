@@ -1,12 +1,17 @@
 package com.furglitch.vendingblock.forge;
 
+import com.furglitch.vendingblock.blockentity.VendorBE;
+import com.furglitch.vendingblock.blockentity.renderer.VendorBERenderer;
 import com.furglitch.vendingblock.client.screen.VendorScreen;
 import com.furglitch.vendingblock.config.ConfigScreen;
+import com.furglitch.vendingblock.registry.BlockEntityRegistry;
 import com.furglitch.vendingblock.registry.BlockRegistry;
 import dev.architectury.registry.menu.MenuRegistry;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.client.ConfigScreenHandler;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -18,6 +23,7 @@ public class VendingBlockForgeClient {
             () -> new ConfigScreenHandler.ConfigScreenFactory((mc, screen) -> ConfigScreen.create(screen))
         );
         FMLJavaModLoadingContext.get().getModEventBus().addListener(VendingBlockForgeClient::onClientSetup);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(VendingBlockForgeClient::registerRenderers);
     }
 
     private static void onClientSetup(FMLClientSetupEvent event) {
@@ -29,5 +35,13 @@ public class VendingBlockForgeClient {
                 VendorScreen::new
             );
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(
+            (BlockEntityType<VendorBE>) (BlockEntityType<?>) BlockEntityRegistry.VENDOR_BE.get(),
+            VendorBERenderer::new
+        );
     }
 }

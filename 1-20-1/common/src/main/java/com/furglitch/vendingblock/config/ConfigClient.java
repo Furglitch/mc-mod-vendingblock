@@ -15,7 +15,7 @@ public class ConfigClient implements ConfigData {
     public Animation animation = new Animation();
     public static class Animation {
 
-        enum ItemMode {
+        public enum ItemMode {
             SERVER("text.autoconfig.vendingblock.option.animation.itemMode.server"),
             STILL("text.autoconfig.vendingblock.option.animation.itemMode.still"),
             BOBBING("text.autoconfig.vendingblock.option.animation.itemMode.bobbing"),

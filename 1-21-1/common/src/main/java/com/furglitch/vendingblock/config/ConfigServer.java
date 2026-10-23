@@ -79,7 +79,7 @@ public class ConfigServer implements ConfigData {
     @ConfigEntry.Gui.TransitiveObject
     public Animation animation = new Animation();
     public static class Animation {
-        enum ItemMode {
+        public enum ItemMode {
             STILL("text.autoconfig.vendingblock.option.animation.itemMode.still"),
             BOBBING("text.autoconfig.vendingblock.option.animation.itemMode.bobbing"),
             SPINNING("text.autoconfig.vendingblock.option.animation.itemMode.spinning"),
@@ -98,7 +98,7 @@ public class ConfigServer implements ConfigData {
         }
 
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
-        private ItemMode itemMode = ItemMode.STILL;
+        private ItemMode itemMode = ItemMode.SPINNING;
             public ItemMode getItemMode() { return itemMode; }
             public void setItemMode(ItemMode itemMode) { this.itemMode = itemMode; }
 

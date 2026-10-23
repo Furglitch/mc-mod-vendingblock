@@ -20,8 +20,8 @@ public class VendorMenu extends AbstractContainerMenu {
 
     public static final int VENDOR_SLOTS   = 9;
     public static final int PRICE_SLOT     = 1;
-    public static final int PAYMENT_SLOT   = 1;
-    public static final int CONTAINER_SIZE = VENDOR_SLOTS + PRICE_SLOT + PAYMENT_SLOT;
+    public static final int PRODUCT_SLOT   = 1;
+    public static final int CONTAINER_SIZE = VENDOR_SLOTS + PRICE_SLOT + PRODUCT_SLOT;
 
     // CLIENT
     public VendorMenu(int syncId, Inventory playerInventory) {
@@ -49,7 +49,7 @@ public class VendorMenu extends AbstractContainerMenu {
         // Price slot
         addSlot(new Slot(container, 9, 116, 17));
 
-        // Payment slot
+        // Product slot
         addSlot(new Slot(container, 10, 116, 53));
 
         // Player inventory (27 slots)
