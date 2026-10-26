@@ -1,5 +1,6 @@
 package com.furglitch.vendingblock.blockentity.renderer;
 
+import com.furglitch.vendingblock.blockentity.VendorBE;
 import com.furglitch.vendingblock.blockentity.renderer.VendorBlockProductRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 
