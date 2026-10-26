@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.furglitch.vendingblock.blockentity.VendorBE;
+import com.furglitch.vendingblock.blockentity.transaction.VendorBETransaction;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.BlockPos;
@@ -50,15 +51,27 @@ public class VendorBlock extends BaseEntityBlock {
         if (!level.isClientSide()) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof VendorBE vendorBE) {
-                player.openMenu(vendorBE);
+                if (vendorBE.isOwner(player)) {
+                    player.openMenu(vendorBE);
+                } else {
+                    VendorBETransaction.purchase(level, player, vendorBE);
+                }
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide());
+        return level.isClientSide() ? InteractionResult.PASS : InteractionResult.SUCCESS;
     }
 
     @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new VendorBE(pos, state);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @org.jetbrains.annotations.Nullable net.minecraft.world.entity.LivingEntity placer, net.minecraft.world.item.ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (placer instanceof Player player && level.getBlockEntity(pos) instanceof VendorBE vendorBE) {
+            vendorBE.setOwner(player);
+        }
     }
 
     @SuppressWarnings("unchecked")

@@ -4,11 +4,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.furglitch.vendingblock.blockentity.VendorBE;
+import com.furglitch.vendingblock.blockentity.transaction.VendorBETransaction;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -47,7 +50,11 @@ public class VendorBlock extends BaseEntityBlock {
         if (!level.isClientSide()) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof VendorBE vendorBE) {
-                player.openMenu(vendorBE);
+                if (vendorBE.isOwner(player)) {
+                    player.openMenu(vendorBE);
+                } else {
+                    VendorBETransaction.purchase(level, player, vendorBE);
+                }
             }
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
@@ -56,6 +63,14 @@ public class VendorBlock extends BaseEntityBlock {
     @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new VendorBE(pos, state);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (placer instanceof Player player && level.getBlockEntity(pos) instanceof VendorBE vendorBE) {
+            vendorBE.setOwner(player);
+        }
     }
 
     @SuppressWarnings("unchecked")

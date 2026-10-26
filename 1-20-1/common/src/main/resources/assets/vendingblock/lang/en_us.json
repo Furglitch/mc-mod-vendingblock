@@ -27,5 +27,12 @@
   "text.autoconfig.vendingblock.option.admin.breakLevel.moderator": "Moderator",
   "text.autoconfig.vendingblock.option.admin.breakLevel.gamemaster": "Game Master",
   "text.autoconfig.vendingblock.option.admin.breakLevel.admin": "Admin",
-  "text.autoconfig.vendingblock.option.admin.breakLevel.serverOwner": "Server Owner"
+  "text.autoconfig.vendingblock.option.admin.breakLevel.serverOwner": "Server Owner",
+  "msg.vendingblock.sell": "Bought %s %s for %s %s",
+  "msg.vendingblock.giveaway": "Took %s %s",
+  "msg.vendingblock.request": "Gave %s %s",
+  "msg.vendingblock.empty.player": "You do not have sufficient payment for the product!",
+  "msg.vendingblock.full.player": "You do not have space for the product!",
+  "msg.vendingblock.sold": "This vendor is sold out",
+  "msg.vendingblock.full": "This vendor doesn't have space for payment"
 }

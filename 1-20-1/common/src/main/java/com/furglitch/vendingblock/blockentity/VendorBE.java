@@ -1,5 +1,7 @@
 package com.furglitch.vendingblock.blockentity;
 
+import java.util.UUID;
+
 import com.furglitch.vendingblock.menu.VendorMenu;
 import com.furglitch.vendingblock.registry.BlockEntityRegistry;
 
@@ -25,19 +27,39 @@ public class VendorBE extends BaseContainerBlockEntity {
 
     public static final int SLOT_COUNT = 11;
     private NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
+    private UUID ownerID;
+    private String ownerName;
 
     public VendorBE(BlockPos pos, BlockState state) {
         super(BlockEntityRegistry.VENDOR_BE.get(), pos, state);
     }
 
+    public void setOwner(Player player) {
+        this.ownerID = player.getUUID();
+        this.ownerName = player.getName().getString();
+        setChanged();
+    }
+
+    public boolean isOwner(Player player) {
+        if (this.ownerID != null && this.ownerID.equals(player.getUUID())) {
+            return true;
+        }
+        if (this.ownerName != null && this.ownerName.equals(player.getName().getString())) {
+            this.ownerID = player.getUUID();
+            setChanged();
+            return true;
+        }
+        return false;
+    }
+
     /**
-     * @return {boolean} true if slot 10 (product slot) has an item that is not in any of slots 1-9 (stock slots).
+     * @return true if slot 10 (product slot) has an item that is not in any of slots 0-8 (stock slots).
      */
     public boolean isOutOfStock() {
         ItemStack product = getItem(10);
         if (product.isEmpty()) return false;
 
-        for (int i = 1; i <= 9; i++) {
+        for (int i = 0; i <= 8; i++) {
             ItemStack stock = getItem(i);
             if (!stock.isEmpty() && ItemStack.isSameItem(product, stock)) {
                 return false;
@@ -116,6 +138,8 @@ public class VendorBE extends BaseContainerBlockEntity {
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         ContainerHelper.saveAllItems(tag, items);
+        if (this.ownerID != null) tag.putUUID("ownerID", this.ownerID);
+        if (this.ownerName != null) tag.putString("ownerName", this.ownerName);
     }
 
     @Override
@@ -123,6 +147,8 @@ public class VendorBE extends BaseContainerBlockEntity {
         super.load(tag);
         items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, items);
+        if (tag.hasUUID("ownerID")) this.ownerID = tag.getUUID("ownerID");
+        if (tag.contains("ownerName")) this.ownerName = tag.getString("ownerName");
     }
 
     @Override
