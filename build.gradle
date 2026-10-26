@@ -225,5 +225,5 @@ tasks.register("mergeAll") {
 
 // Force sequential execution to avoid Architectury Transformer parallel path conflicts
 tasks.named("merge1201Jars").configure {
-    mustRunAfter "mergeJars"
+    shouldRunAfter "mergeJars"
 }
