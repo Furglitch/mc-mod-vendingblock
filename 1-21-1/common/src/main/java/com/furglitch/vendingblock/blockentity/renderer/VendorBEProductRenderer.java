@@ -17,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 
-public class VendorBlockProductRenderer {
+public class VendorBEProductRenderer {
 
     private float rotation;
     private long lastTime = System.currentTimeMillis();
