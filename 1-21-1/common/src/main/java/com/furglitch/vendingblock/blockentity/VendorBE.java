@@ -29,6 +29,22 @@ public class VendorBE extends BaseContainerBlockEntity {
         super(BlockEntityRegistry.VENDOR_BE.get(), pos, state);
     }
 
+    /**
+     * @return {boolean} true if slot 10 (product slot) has an item that is not in any of slots 1-9 (stock slots).
+     */
+    public boolean isOutOfStock() {
+        ItemStack product = getItem(10);
+        if (product.isEmpty()) return false;
+
+        for (int i = 1; i <= 9; i++) {
+            ItemStack stock = getItem(i);
+            if (!stock.isEmpty() && ItemStack.isSameItemSameComponents(product, stock)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     protected Component getDefaultName() {
         return Component.translatable("block.vendingblock.vending_block");
